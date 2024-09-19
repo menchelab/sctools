@@ -21,10 +21,8 @@ def integrate_data_scvi(
     continuous_covariate_keys = None,
     use_highly_variable_genes = True,
     n_top_genes = 4000,
-    use_gpu = True,
-    max_epochs = None,
-    train_size = 0.9,
-    filter_small_batches = True
+    filter_small_batches = True,
+    **kwargs
     
 ):
     if filter_small_batches:
@@ -62,11 +60,7 @@ def integrate_data_scvi(
         n_latent = 30,
         gene_likelihood = 'nb'
     )
-    model.train(
-        use_gpu = use_gpu,
-        max_epochs = max_epochs,
-        train_size = train_size
-    )
+    model.train(**kwargs)
     adata.obsm['X_scvi'] = model.get_latent_representation()
     
     print('compute umap from scvi embedding')
