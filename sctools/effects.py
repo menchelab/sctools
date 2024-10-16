@@ -66,12 +66,12 @@ def compute_associations(data, score_column, categorical, reference_category = N
 
 
 # helper function for cleaner code
-def compute_associations_per_group(*args, **kwargs):
+def compute_associations_per_group(data, *args, **kwargs):
     high_level_grouping = kwargs.pop('high_level_grouping')
     
     group_coeffs = {}
     for group_name, group_data in data.groupby(high_level_grouping, observed = True):
-        group_coeffs[group_name] = compute_associations(*args, **kwargs)
+        group_coeffs[group_name] = compute_associations(group_data, *args, **kwargs)
         
     return pd.concat(group_coeffs, names = ['groups'])
     
