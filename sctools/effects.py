@@ -73,7 +73,7 @@ def compute_associations_per_group(data, *args, **kwargs):
     for group_name, group_data in data.groupby(high_level_grouping, observed = True):
         group_coeffs[group_name] = compute_associations(group_data, *args, **kwargs)
         
-    return pd.concat(group_coeffs, names = ['groups'])
+    return pd.concat(group_coeffs, names = [high_level_grouping])
     
 
 def category_effects_on_modules(
