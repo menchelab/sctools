@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import scanpy as sc
 
 from sklearn.decomposition import TruncatedSVD
 from scipy.stats import pearsonr
