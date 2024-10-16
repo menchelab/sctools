@@ -4,6 +4,7 @@ import statsmodels.formula.api as smf
 import pandas as pd
 
 from statsmodels.stats.multitest import fdrcorrection
+from functools import partial
 
 
 logging.basicConfig(format='%(asctime)s %(message)s')
@@ -105,7 +106,14 @@ def category_effects_on_modules(
     :return:                       pandas.DataFrame with the computed effect sizes + additional summary statistics
     """
     coeff_frames = {}
-    association_func = compute_associations_per_group if high_level_grouping else compute_associations
+    association_func = (
+        partial(
+            compute_associations_per_group, 
+            high_level_grouping = high_level_grouping
+        ) 
+        if high_level_grouping 
+        else compute_associations
+    )
     for module_name, module_genes in gene_modules.items():
         logging.info(f'computing gene scores on module {module_name}')
         scores = scoring_func(adata, module_genes)
