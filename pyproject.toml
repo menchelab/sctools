@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sctools"
-version = "1.0.0"
+version = "1.0.1"
 description = "Python package for making large scale scRNAseq analysis a bit easier"
 readme = "README.md"
 authors = [{ name = "Daniel Malzl", email = "daniel@menchelab.com" }]
@@ -23,9 +23,11 @@ dependencies = [
     'numpy >= 1.24.3',
     'pandas >= 1.5.3',
     'scanpy >= 1.9.6',
+    'scikit-learn >= 1.5.4',
     'scipy >= 1.11.4',
     'scvi-tools >= 0.15.4',
     'seaborn >= 0.11.2',
+    'statsmodels >= 0.14.3',
 #     'doubletdetection >= 4.2'
 ]
 requires-python = ">=3.9"
