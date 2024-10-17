@@ -151,3 +151,4 @@ def dotplot(
     fig.set_figwidth(figsize[0] + 2)
     fig.set_figheight(figsize[1])
     fig.tight_layout()
+    return fig
