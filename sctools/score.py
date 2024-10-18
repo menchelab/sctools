@@ -7,6 +7,14 @@ from scipy.stats import pearsonr
 
 
 def bin_data(average_expression, nbins):
+    '''
+    assigns genes to one of nbins bins of equal numbers of genes based on their average expression. 
+
+    :param average_expression:    np.array containing the average gene expression over all cells
+    :param nbins:                 number of equal-sized bins to group genes into
+
+    :return:                      np.array of length len(average_expression) containing the bin assignment for each gene
+    '''
     n_values = len(average_expression)
     num_vals_per_bin = n_values // nbins
     sorted_idx = np.argsort(average_expression)
@@ -24,9 +32,17 @@ def bin_data(average_expression, nbins):
     return bin_assignments
 
 
-# gene module score as defined by Tirosh et al. Science 2016
-# https://doi.org/10.1126/science.aad0501
 def gene_module_score(adata, gene_list):
+    '''
+    computes the gene module score as implemented in Tirosh et al. Science 2016 (https://doi.org/10.1126/science.aad0501)
+    In brief, this score is the difference between the average expression of genes in a module and a random sampled set of control genes
+    (random sample adjusted for the magnitude of expression of each gene in gene module)
+
+    :param adata:        AnnData object to compute score from
+    :param gene_list:    list of genes in gene module to use for score computation
+
+    :return:             np.array containing the computed score per cell
+    '''
     genes_in_adata = set(adata.var.index.to_list())
     filtered_gene_list = list(
         set(gene_list) & genes_in_adata
@@ -89,6 +105,10 @@ def gene_module_score(adata, gene_list):
 
 
 def ensure_one_dimensional(array):
+    '''
+    utility function to ensure the returned array is a 1D numpy.array and not a 
+    2D numpy.matrix as is the case for aggregations of CSR matrix data
+    '''
     if isinstance(array, np.matrix):
         array = np.array(array)
     
@@ -99,9 +119,10 @@ def ensure_one_dimensional(array):
 
 
 def align_to_expression(eigengene, bdata):
-    """
-    ensures that orientation of eigengene follows average expression
-    """
+    '''
+    utility function that ensures that orientation of eigengene follows average expression. 
+    This is necessary due to sign indeterminacy of the SVD transformation
+    '''
     average_expression = ensure_one_dimensional(bdata.X.sum(axis = 1))
     res = pearsonr(average_expression, eigengene)
     
@@ -112,14 +133,19 @@ def align_to_expression(eigengene, bdata):
 
 
 def module_eigengene(adata, genes):
-    """
-    computes module eigenegenes for each cell in adata according to 
-    https://github.com/cran/WGCNA/blob/master/R/Functions.R
-    using the truncated SVD implementation of sci-kit learn 
-    (seems to yield the same results as R as determined by running this 
-    and then comparing to moduleEigengenes output in R based on the same data and selected genes)
-    (PCA would also work here but shows slight differences in the values)
-    """
+    '''
+    computes module eigenegenes for each cell in adata according to https://github.com/cran/WGCNA/blob/master/R/Functions.R
+    using the truncated SVD implementation of sci-kit learn (seems to yield the same results as R as determined by running this 
+    and then comparing to moduleEigengenes output in R based on the same data and selected genes; PCA would also work here 
+    but shows slight differences in the values). In brief, this score is the sample weighting of the data according to the 
+    singular vector with the corresponding to the highest singular value and basically gives a weighted average of gene expression
+    in the module.
+
+    :param adata:  AnnData to compute eigengenes for
+    :param genes:  list of genes to use for eigengene computation (i.e. the genes contained in the module)
+
+    :return:       pandas.Series containing eigengene score for each cell
+    '''
     
     bdata = adata[:, genes].copy()
     sc.pp.scale(bdata)
