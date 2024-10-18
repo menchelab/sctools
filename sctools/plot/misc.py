@@ -18,6 +18,21 @@ def generate_and_save_for_figure(
     edgecolor = 'none',
     linewidths = 1.5
 ):
+    '''
+    utility function to generate equal-sized plots of umaps by removing the legend saving it to an extra file
+
+    :param adata:                  AnnData object to generate plots for
+    :param columns_to_plot:        adata.obs columns to use for annotating the plots
+    :param scatter_save_file:      path to the file to save the umap scatter to (recommend PNG)
+    :param legend_save_file:       path to the file to save legend to (recommend PDF)
+    :param scatter_dpi:            dot per inch to plot the umap PNG in
+    :param scatter_size:           tuple denoting the size of the umap plot
+    :param size:                   size of the scatter dots
+    :param edgecolor:              color of the edge lines of the scatter dots
+    :param linewidths:             with of the edge lines of the scatter dots
+
+    :return:                       None
+    '''
     for col, (palette, vmax) in columns_to_plot.items():
         # generate figure and remove legend
         fig, ax = plt.subplots()
