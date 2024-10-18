@@ -12,7 +12,18 @@ from matplotlib.patches import Rectangle
 mpl.rcParams['pdf.fonttype'] = 42
 
 
-def plot_expression_histogram(adata, layer = 'counts', bins = 50):
+def plot_expression_histogram(adata, gene, layer = 'counts', bins = 50, indicate_hi_lo = False):
+    '''
+    generates a histogram of expression values
+
+    :param adata:            AnnData object containing the data
+    :param gene:             gene to plot expression for
+    :param layer:            layer of adata to fetch data from
+    :param bins:             number of bins to use for histogram
+    :param indicate_hi_lo:   whether to indicate hi and lo expression groups based on the median expression of 'gene'
+
+    :return:                 plt.Figure
+    '''
     adata = adata.copy()
 
     if layer:
@@ -25,9 +36,15 @@ def plot_expression_histogram(adata, layer = 'counts', bins = 50):
     sc.pp.log1p(adata)
 
     fig, ax = plt.subplots()
-    x = adata[:, 'SAT1'].X.toarray().flatten()
+    x = adata[:, gene].X.toarray().flatten()
     thres = np.median(x)
-    hue = ['SAT1_hi' if xi > thres else 'SAT1_lo' for xi in x]
+
+    if indicate_hi_lo:
+        hue = [f'{gene}_hi' if xi > thres else '{gene}_lo' for xi in x]
+
+    else:
+        hue = None
+        
     sns.histplot(
         x = x,
         bins = bins,
@@ -36,7 +53,7 @@ def plot_expression_histogram(adata, layer = 'counts', bins = 50):
         multiple = 'stack',
         palette = 'Set2'
     )
-    ax.set_title('SAT1 expression')
+    ax.set_title(f'{gene} expression')
     ax.set_xlabel('log(cpm)')
     ax.axvline(thres, ls = '--', c = 'grey')
 
@@ -47,6 +64,9 @@ def plot_expression_histogram(adata, layer = 'counts', bins = 50):
 
 
 def annotate_enrichment(x, spatial_fdr_threshold = 0.25):
+    '''
+    utility function to annotate enrichment of milopy neighborhoods
+    '''
     if x['SpatialFDR'] < spatial_fdr_threshold:
         return 'enriched' if x['logFC'] > 0 else 'depleted'
     
@@ -55,6 +75,15 @@ def annotate_enrichment(x, spatial_fdr_threshold = 0.25):
 
 
 def plot_nhood_violin(adata, spatial_fdr_threshold = 0.25, ax = None):
+    '''
+    generate violin plot indicating enrichment or depletion of milopy neighborhoods
+
+    :param adata:                    AnnData containing the data (needs to have been processed with milopy first)
+    :param spatial_fdr_threshold:    spatial fdr threshold to use for significance computation
+    :param ax:                       optional Axes object to generate the plot in (if not given a figure will be generated)
+
+    :return:                         plt.Axes object containing the plot
+    '''
     if isinstance(ax, type(None)):
         fig, ax = plt.subplots()
         set_figure_extents = True
@@ -89,11 +118,7 @@ def plot_nhood_violin(adata, spatial_fdr_threshold = 0.25, ax = None):
         edgecolor = 'k',
         linewidth = 0.5
     )
-    ax.set_ylabel('SAT1 status', fontsize = 20)
     ax.set_xlabel('logFC', fontsize = 20)
-    ax.set_yticklabels(
-        ['SAT1 low', 'SAT1 high']
-    )
     ax.tick_params(
         labelsize = 15
     )
@@ -121,6 +146,9 @@ def subplot_from_gridspec(
     show_yticks = False, 
     show_spines = True
 ):
+    '''
+    utility function for generating a subplot from a gridspec object
+    '''
     ax = fig.add_subplot(gs[row, col])
     
     if not show_xticks:
@@ -137,6 +165,9 @@ def subplot_from_gridspec(
 
 
 def setup_figure(width, height, x_groupby = [], y_groupby = []):
+    '''
+    utility function to set up a figure for custom heatmap plot
+    '''
     fig = plt.figure(figsize = (width, height))
     heatmap_width = 8
     annotation_width = 0.2
@@ -201,6 +232,9 @@ def setup_figure(width, height, x_groupby = [], y_groupby = []):
 
 
 def group_data(data, groupby):
+    '''
+    utility data to for grouping data. groups data and returns two dictionaries
+    '''
     grouped_data = pd.concat(
         # avoid warning for single grouper by unpacking
         [g for _, g in data.groupby(groupby[0] if len(groupby) == 1 else groupby)]
@@ -212,6 +246,9 @@ def group_data(data, groupby):
 
 
 def group_heatmap_data(data, x_groupby, y_groupby, x_group_df, y_group_df):
+    '''
+    generates grouped data for heatmap generation
+    '''
     data = data.merge(
         x_group_df,
         how = 'left',
@@ -232,6 +269,9 @@ def group_heatmap_data(data, x_groupby, y_groupby, x_group_df, y_group_df):
 
 
 def groups_to_colors(group_info, palette_name):
+    '''
+    returns colors for each group in group_info according to the given palette_name
+    '''
     groups = sorted(group_info.unique())
     palette = sns.color_palette(palette_name, len(groups))
     colormap = {
@@ -241,6 +281,9 @@ def groups_to_colors(group_info, palette_name):
 
 
 def group_info_to_colors(group_info, y_grouper, palette):
+    '''
+    enables the specification of custom group colors if required
+    '''
     if isinstance(palette, str):
         colormap = groups_to_colors(group_info, palette)
     
@@ -261,6 +304,9 @@ def add_group_annotation(
     y_grouper = False, 
     plot_first_group_borders = True
 ):
+    '''
+    adds a group annotation to row or column of the heatmap based on if y_grouper is True or False
+    '''
     heatmap = axs['heatmap']
     for i, (group, group_info) in enumerate(group_info_dict.items()):
         ax = axs[group]
@@ -295,6 +341,9 @@ def swap(a, b):
 
 
 def get_text_extents(text, renderer, inverse_ax_transform):
+    '''
+    spacing helper function for custom group annotation legend generation
+    '''
     bb = text.get_window_extent(renderer = renderer)
     transformed_bb = inverse_ax_transform.transform_bbox(bb)
     width, height = transformed_bb.width, transformed_bb.height
@@ -303,6 +352,9 @@ def get_text_extents(text, renderer, inverse_ax_transform):
 
 
 def get_rect_extents(rect, inverse_ax_transform):
+    '''
+    spacing helper function for custom group annotation legend generation
+    '''
     transformed_bb = inverse_ax_transform.transform_bbox(
         rect.get_extents()
     )
@@ -320,6 +372,9 @@ def add_legend(
     y_group_palettes, 
     patch_dim_ratio = 1
 ):   
+    '''
+    adds legends for custom group annotations of rows and columns to plot
+    '''
     renderer = fig.canvas.get_renderer()
     inverse_ax_transform = ax.transData.inverted()
     vertical_spacing = 0.01
@@ -417,6 +472,9 @@ def set_axes_extents(
     y_group_palettes, 
     patch_dim_ratio = 1
 ):
+    '''
+    spacing helper function for custom legend (this works semi-well)
+    '''
     ymax, xmax = add_legend(
         fig,
         ax,
@@ -436,6 +494,9 @@ def set_axes_extents(
 
 
 def get_subset_tick_pos_and_labels(labels, subset = None):
+    '''
+    helper function to make annotation of single genes possible
+    '''
     if not subset:
         return np.arange(len(labels)) + 0.5, labels
     
@@ -465,6 +526,29 @@ def grouped_heatmap(
     figwidth = 10,
     figheight = 10
 ):
+    '''
+    generates a heatmap of data values that can be grouped according to custom groups along rows and columns
+
+    :param adata:                AnnData object containing the data to plot
+    :param x_groupby:            list of strings denoting the columns of adata.obs to use for grouping the columns
+    :param y_groupby:            list of strings denoting the columns of adata.var to use for grouping the rows
+    :param x_group_palettes:     dictionary of color palettes to use for each x grouping variable. 
+                                 Keys are the same as in x_groupby values can either be a named seaborn color palette
+                                 or a dictionary mapping value names of the respective x_groupby column to specific color values
+                                 (e.g. {'condition': 'husl', 'timepoint': {'early': 'green', 'late': 'red'})
+    :param y_group_palettes:     same as x_group_palettes but for the y_groupby keys
+    :param cmap:                 colormap to use for plotting the grouped heatmap
+    :param vmin:                 minimum value of the colormap
+    :param vmax:                 maximum value of the colormap
+    :param show_var_labels:      if True shows row labels
+    :param swap_axes:            if True swaps x and y axes (useful for transposing the generated heatmap)
+    :param var_labels_to_show:   optional list of adata.var column (i.e. genes) to show when show_var_labels is true 
+                                 (useful for only annotating specific genes of interest)
+    :param figwidth:             width of the generated figure
+    :param figheight:            height of the generated figure
+
+    :return:                     plt.Figure, array of Axes objects for the subplots and the x and y grouping info as dictionaries
+    '''
     data = adata.to_df()
     obs = adata.obs.loc[:, x_groupby]
     var = adata.var.loc[:, y_groupby]
