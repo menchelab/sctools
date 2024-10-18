@@ -17,6 +17,21 @@ def plot_leiden_clusterings(
     subsample = 1, 
     size = None
 ):
+    '''
+    utility function to quickly generate and plot Leiden clusterings of different resolutions for a range of datasets.
+    Very useful for assessing multiple resolutions with just one command
+
+    :param data_dict:      dictionary of AnnData objects or dictionaries of integrated results (see integrated_data_scvi function)
+    :param resolutions:    list of resolutions to use for generating Leiden clusterings
+    :param data_key:       if data_dict contains dictionaries indicates the key that contains the AnnData object
+    :param legend_loc:     location of the cluster legend
+    :param panelheight:    height of the generated Axes
+    :param panelwidth:     width of the generated Axes
+    :param subsample:      percentage of cells to sample for reducing plot sizes in case of PDF plots
+    :param size:           dot size to use for plotting the data
+
+    :return:               plt.Figure, array of Axes objects
+    '''
     fig, axs = plt.subplots(
         len(data_dict), 
         len(resolutions)
@@ -74,6 +89,20 @@ def plot_integration_results(
     subsample = 1,
     legend_off = False
 ):
+    '''
+    utility function to quickly assess integration results of multiple runs with different parameterizations
+
+    :param data_dict:      dictionary of AnnData objects or dictionaries of integrated results (see integrated_data_scvi function)
+    :param color_keys:     list of strings denoting columns in adata.obs or adata.var to use for plotting
+    :param params_list:    list of dictionaries containing keyword arguments for sc.pl.umap for each key in 'color_keys'
+    :param data_key:       if data_dict contains dictionaries indicates the key that contains the AnnData object
+    :param panelheight:    height of the generated Axes
+    :param panelwidth:     width of the generated Axes
+    :param subsample:      percentage of cells to sample for reducing plot sizes in case of PDF plots
+    :param legend_off:     whether to show legends for each generated umap
+
+    :return:               plt.Figure, array of Axes objects
+    '''
     fig, axs = plt.subplots(len(color_keys), len(data_dict))
     for i, (k, d) in enumerate(data_dict.items()):
         if data_key:
@@ -129,6 +158,21 @@ def plot_clustering_and_expression(
     subsample = 1,
     legend_off = False
 ):
+    '''
+    utility function to quickly plot a clustering result accompanied with gene expression overlays to assess cluster validity or cell identity
+
+    :param data_dict:          dictionary of AnnData objects or dictionaries of integrated results (see integrated_data_scvi function)
+    :param cluster_keys:       dictionary corresponding to data_dict and containing a string denoting the clusterings to plot for each dataset
+    :param expression_keys:    list of genes contained in adata.var to plot aside clusterings
+    :param params_list:        list of dictionaries containing keyword arguments for sc.pl.umap for each key cluster_keys + expression_keys
+    :param data_key:           if data_dict contains dictionaries indicates the key that contains the AnnData object
+    :param panelheight:        height of the generated Axes
+    :param panelwidth:         width of the generated Axes
+    :param subsample:          percentage of cells to sample for reducing plot sizes in case of PDF plots
+    :param legend_off:         whether to show legends for each generated umap
+    
+    :return:                   plt.Figure, array of Axes objects
+    '''
     fig, axs = plt.subplots(len(expression_keys) + 1, len(data_dict))
     for i, (k, d) in enumerate(data_dict.items()):
         color_keys = [cluster_keys[k]] + expression_keys
@@ -176,6 +220,17 @@ def plot_clustering_and_expression(
 
 
 def raw_data_umap(adata, color, nhvg = 4000, savefile = None, **kwargs):
+    '''
+    generate and plot a umap for a raw unintegrated dataset to assess batch effects
+
+    :param adata:        AnnData object to generate the umap for
+    :param color:        list of strings denoting columns on adata.obs to annotate umaps with
+    :param nhvg:         number of highly variable genes to use for umap computation
+    :param savefile:     path to file to save the plot to (optional)
+    :param **kwargs:     keyword arguments to pass to sc.pl.umap
+
+    :return:             None
+    '''
     tmp = adata.copy()
     sc.pp.normalize_total(
         tmp, 
