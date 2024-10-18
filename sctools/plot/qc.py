@@ -12,6 +12,16 @@ def generate_qc_plots(
     qc_pass_idx, 
     thresholds = None
 ):
+    '''
+    utility function to generate qc plots to assess the impact of the QC filtering on the data
+
+    :param axs:            2D numpy.array of Axes objects to generate the plots in
+    :param df:             adata.obs of the dataset to assess QC for
+    :param qc_pass_idx:    boolean numpy.array corresponding to df indicating if cell is filtered or not (see qc.compute_qc_metrics for details on this)
+    :param thresholds:     optional dictionary of used threshold to compute qc_pass_idx (see qc.compute_qc_metrics for details on this)
+
+    :return:               None
+    '''
     datacols = ['nFeature_RNA', 'percent_mt', 'percent_ribo']
     hue = ['pass' if x else 'fail' for x in qc_pass_idx] if not all(qc_pass_idx) else None
     palette = {'pass': '#4B72B1', 'fail': 'red'} if hue else None
@@ -78,6 +88,17 @@ def plot_qc(
     sample_id_column = None,
     sharex = False
 ):
+    '''
+    generates QC impact assessment plots for a given dataset containing multiple samples 
+    (useful for QC filtering of datasets consisting of multiple datasets before integration)
+
+    :param adata:           AnnData object containing the data to QC
+    :param thresholds:      optional dictionary of used threshold to compute qc_pass_idx (see qc.compute_qc_metrics for details on this)
+    :param sample_id_col:   string denoting the column containing the sample id info. if given qc is plotted for each sample separately else adata is considered in full
+    :param sharex:          whether x axes of qc plot colums should be aligned (useful to directly compare samples)
+
+    :return:                plt.Figure
+    '''
     if not sample_id_column:
         fig, axs = plt.subplots(2, 3)
         generate_qc_plots(
