@@ -7,6 +7,16 @@ from matplotlib import gridspec
 
 
 def normalize_size(size_data, min_size, max_size, size_scale = 25):
+    '''
+    utility function to normalize sizes into a given scale between 0 and size_scale
+
+    :param size_data:    2D np.array or similar containing values indicating the size of dots
+    :param min_size:     minimum size to consider in the norm
+    :param max_size:     maximum size to consider in the norm
+    :param size_scale:   rescaling factor for the resulting norm
+
+    :return:             normalized and rescaled size values
+    '''
     norm = Normalize(min_size, max_size, clip = True)
     normalized_sizes = np.zeros(shape = size_data.shape)
     for i, row in enumerate(size_data.values):
@@ -17,11 +27,25 @@ def normalize_size(size_data, min_size, max_size, size_scale = 25):
 
 
 def hide_spines(ax):
+    '''
+    hides all spines of the given Axes object
+    '''
     for pos in ['top', 'bottom', 'left', 'right']:
         ax.spines[pos].set_visible(False)
 
 
 def add_dotsize_legend(min_size, max_size, size_scale, ax, n):
+    '''
+    adds a legend of dot sizes to the given Axes object
+
+    :param min_size:        minimum dot size
+    :param max_size:        maximum dot size
+    :param size_scale:      dot size rescaler
+    :param ax:              Axes object to plot the legend to
+    :param n:               number of sizes to show in the legend
+
+    :return:                None
+    '''
     legend_sizes = np.linspace(min_size, max_size, n)
     
     if legend_sizes[0] == 0:
@@ -62,6 +86,27 @@ def dotplot(
     cbar_label = None,
     dotsize_label = None
 ):
+    '''
+    creates a dotplot similar to Fig2B of https://doi.org/10.1126/science.aaz6063 
+
+    :param color_data:                2D numpy.array or pandas.DataFrame containing data to use for coloring the dots
+    :param size_data:                 2D numpy.array or pandas.DataFrame containing data to use for dot size
+    :param colormap:                  colormap to use for coloring the dots (either a string for named colormap or a colormap object)
+    :param vmin:                      minimum value of the colormap (values lower will be clipped) if not given uses minimum of color_data
+    :param vmax:                      maximum value of the colormap (values higher will be clipped) if not given uses maximum of color_data
+    :param size_norm:                 tuple of min and max value of the dotsizes, if given, values of size_data will be mapped to this scale, values outsize will be clipped
+    :param indicator_threshold:       threshold value to use for indicating dots with a outline of color 'indicator_color'
+    :param indicate_from:             indicates which data to compare to the theshold for indication (either 'size' or 'color')
+    :param indicator_color:           color to use for indication
+    :param row_order:                 row index specifying the order to plot rows in (useful to align plot with other plots e.g. seaborn.clustermap)
+    :param col_order:                 column index specifying the order to plot columns in (useful to align plot with other plots e.g. seaborn.clustermap)
+    :param size_scale:                rescale factor for dot sizes (mainly for aesthetic purposes)
+    :param figsize:                   tuple of (figwidth, figheight) specifying the dimensions of the generated figure
+    :param cbar_label:                label to use for the colorbar
+    :param dotsize_label:             label to use for the dot size legend
+
+    :return:                          plt.Figure
+    '''
     num_rows, num_cols = color_data.shape
     xs = np.linspace(0, num_cols, num_cols)
     ys = np.linspace(0, num_rows, num_rows)
