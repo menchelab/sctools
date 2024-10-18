@@ -105,6 +105,7 @@ def compute_associations_per_group(data, high_level_groupuing, *args, **kwargs):
 
     :param data:                  pandas.DataFrame containing the data to use for fitting the model
     :param high_level_grouping:   string denoting the column to use for grouing the data
+    :param *args, **kwargs:       positional and keyword arguments passed to compute_associations
 
     :return:                      pandas.DataFrame containing the model summary for each data group in 'high_level_grouping'
     '''
