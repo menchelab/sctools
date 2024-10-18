@@ -10,6 +10,15 @@ from functools import partial
 logging.basicConfig(format='%(asctime)s %(message)s')
 
 def set_reference(data, categorical, reference):
+    '''
+    utility function to set reference level for categorical
+
+    :param data:         pandas.DataFrame containing the categorical to relevel
+    :param categorical:  string denoting the categorical column to relevel
+    :param reference:    string denoting the name of the level to set as the first level
+
+    :return:             copy of the original dataframe containing the releveled categorical
+    '''
     data = data.copy()
     series = data.loc[:, categorical].copy()
     data.drop(columns = [categorical], inplace = True)
@@ -26,6 +35,14 @@ def set_reference(data, categorical, reference):
 
 
 def summary(fit, drop_intercept = True):
+    '''
+    retrieves a summary of a fitted linear model
+
+    :param fit:              fitted statsmodels.ols instance or similar
+    :param drop_intercept:   bool indicating if intercept should also be returned or removed from summary
+
+    :return:                 pandas.DataFrame containing the summary (coeffs, pvals, std err, tvals and padj) of the fitted linear model
+    '''
     model_summary = []
     attrs = {
         'params': 'coefficients', 
@@ -49,6 +66,18 @@ def summary(fit, drop_intercept = True):
     
 
 def compute_associations(data, score_column, categorical, reference_category = None, covariates = None):
+    '''
+    fits an ordinary least squares model of the form score_column ~ categorical + covariates and
+    reports the computed coefficients as well as their statistical assessments
+
+    :param data:                 pandas.DataFrame containing the scores as well as all covariates to build the model from
+    :param score_column:         string denoting the column containing the target variable for the model
+    :param categorical:          string denoting the column containing the groups for which to compute coefficients (typically categorical but may also work with continuous)
+    :param reference_category:   string denoting the level of 'categorical' to set as the first level (this will implicitly be used as the reference by the model)
+    :param covariates:           list of strings denoting additional covariates to use when fitting the model (akin to regressing them out)
+
+    :return:                     pandas.DataFrame containing a summary of the model fit
+    '''
     if reference_category:
         data = set_reference(
             data,
@@ -57,8 +86,10 @@ def compute_associations(data, score_column, categorical, reference_category = N
         )
     
     predictors = ' + '.join([categorical, *covariates]) if covariates else categorical
+    formula = f'{score_column} ~ {predictors}'
+    logging.info(f'fitting linear model with formula {formula}')
     model = smf.ols(
-        f'{score_column} ~ {predictors}',
+        formula,
         data = data
     )
     regression = model.fit()
@@ -66,9 +97,17 @@ def compute_associations(data, score_column, categorical, reference_category = N
 
 
 # helper function for cleaner code
-def compute_associations_per_group(data, *args, **kwargs):
-    high_level_grouping = kwargs.pop('high_level_grouping')
-    
+def compute_associations_per_group(data, high_level_groupuing, *args, **kwargs):
+    '''
+    subdivides data into groups based on high_level_grouping and fits a linear model
+    for each of these groups. This is especially useful when dealing with similar setups
+    over several groups. For details on *args and **kwargs see compute_associations.
+
+    :param data:                  pandas.DataFrame containing the data to use for fitting the model
+    :param high_level_grouping:   string denoting the column to use for grouing the data
+
+    :return:                      pandas.DataFrame containing the model summary for each data group in 'high_level_grouping'
+    '''
     group_coeffs = {}
     for group_name, group_data in data.groupby(high_level_grouping, observed = True):
         group_coeffs[group_name] = compute_associations(group_data, *args, **kwargs)
