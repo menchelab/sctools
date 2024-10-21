@@ -144,6 +144,27 @@ def category_effects_on_modules(
     :param covariates:             list of strings denoting columns in the AnnData.obs dataframe to use as additional covariates
     
     :return:                       pandas.DataFrame with the computed effect sizes + additional summary statistics
+
+    :Usage:
+    ```
+    from sctools.score import module_eigengene
+    from sctools.effects import category_effects_on_modules
+
+    # make sure adata is log-normalized
+    adata.X = adata.layers['counts']
+    sc.pp.normalize_total(adata)
+    sc.pp.log1p(adata)
+    
+    effects_scores = category_effects_on_modules(
+        adata, 
+        regulons,                               # gene sets to assess effects on, in this case regulons from SCENIC
+        'genotype',                             # column to assess effects on modules for
+        module_eigengene,                       # function to compute module scores per cell
+        reference_category = 'WT',              # set reference condition to 'WT'
+        high_level_grouping = 'timepoint',      # compute effects for groups defined in 'timepoint' column separately
+        covariates = ['nFeature_RNA']           # covariates to regress out
+    )
+    ```
     """
     coeff_frames = {}
     association_func = (
