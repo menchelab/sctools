@@ -49,6 +49,57 @@ def integrate_data_scvi(
     :param **kwargs:                     keyword arguments to pass to scVI.train method
 
     :return:                             dictionary with keys 'data' and 'model' containing the integrated data object as well as the trained scVI model
+
+    :Usage:
+    ```
+    from sctools import integrate, plot
+    
+    # define a set of integration parameters for each dataset you want to integrate
+    # this is useful for parameter sweeps or if different datasets require different parameterizations
+    # in this case we simply have the same parameterization for all datasets
+    integration_params = {
+        k: {'kwargs': dict()} for k in adatas.keys()
+    }
+    
+    integration_results = {}
+    # adatas is a dictionary of datasets
+    for key, adata in adatas.items():
+        print(key)
+        params = integration_params[key]
+        integration_results[key] = integrate.integrate_data_scvi(
+            adata.copy(),
+            'sample_id',
+            train_size = 1,
+            **params['kwargs']
+        )
+
+        # directly writing to files in case something crashed so we at least don't lose the progress
+        integration_results[key]['data'].write(
+            f'../data/{key}.integrated.h5ad'
+        )
+    
+        integration_results[key]['model'].save(
+            f'../data/{key}.integration.scvi.model',
+            overwrite = True
+        )
+
+    # inspect results
+    # in this case we wanted to see if T-cells and especially FOXP3+ cells are clustering well
+    # so for each integrated dataset we plot the same features on the UMAP
+    # with the same kwargs for each
+    fig, axs = plot.integrate.plot_integration_results(
+        integration_results,
+        ['sample_id', 'status', 'FOXP3', 'CD3D'],
+        [
+            dict(size = 20, vmax = None),
+            dict(size = 20, vmax = None),
+            dict(size = 20, vmax = 1),
+            dict(size = 20, vmax = 5)
+        ],
+        data_key = 'data',
+        legend_off = True
+    )
+    ```
     '''
     if filter_small_batches:
         adata = filter_too_few_cell_batches(adata, batch_key)
