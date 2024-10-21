@@ -14,6 +14,11 @@ def bin_data(average_expression, nbins):
     :param nbins:                 number of equal-sized bins to group genes into
 
     :return:                      np.array of length len(average_expression) containing the bin assignment for each gene
+
+    :Usage:
+    ```
+    
+    ```
     '''
     n_values = len(average_expression)
     num_vals_per_bin = n_values // nbins
@@ -39,9 +44,31 @@ def gene_module_score(adata, gene_list):
     (random sample adjusted for the magnitude of expression of each gene in gene module)
 
     :param adata:        AnnData object to compute score from
-    :param gene_list:    list of genes in gene module to use for score computation
+    :param gene_list:    list of genes in gene module to use for score computation (genes not in adata.var will be filtered out)
 
     :return:             np.array containing the computed score per cell
+
+    :Usage:
+    ```
+    from sctools import score
+
+    # make sure X contains log-normalized counts
+    adata.X = adata.layers['counts']
+    sc.pp.normalize_total(adata, target_sum = 1e4)
+    sc.pp.log1p(adata)
+
+    # read genes for set you want to score cells for
+    genes = pd.read_csv(
+        '../resource/fragility_score_genes.txt',
+        sep = '\t'
+    )
+
+    # compute scores
+    gene_scores = score.gene_module_score(
+        adata, 
+        genes.gene
+    )
+    ```
     '''
     genes_in_adata = set(adata.var.index.to_list())
     filtered_gene_list = list(
@@ -145,8 +172,31 @@ def module_eigengene(adata, genes):
     :param genes:  list of genes to use for eigengene computation (i.e. the genes contained in the module)
 
     :return:       pandas.Series containing eigengene score for each cell
-    '''
+
+    :Usage:
+    ```
+        from sctools import score
+
+    # make sure X contains log-normalized counts
+    # or normalization of choice
+    adata.X = adata.layers['counts']
+    sc.pp.normalize_total(adata, target_sum = 1e4)
+    sc.pp.log1p(adata)
+
+    # read genes for set you want to score cells for (or similar)
+    genes = pd.read_csv(
+        '../resource/fragility_score_genes.txt',
+        sep = '\t'
+    )
+
+    # compute scores
+    gene_scores = score.module_eigengene(
+        adata, 
+        genes.gene
+    )
     
+    ```
+    '''
     bdata = adata[:, genes].copy()
     sc.pp.scale(bdata)
     svd = TruncatedSVD(n_components = 5)
