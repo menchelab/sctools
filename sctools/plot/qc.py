@@ -104,6 +104,42 @@ def plot_qc(
     :param sharex:          whether x axes of qc plot colums should be aligned (useful to directly compare samples)
 
     :return:                plt.Figure
+
+    :Usage:
+    ```
+    from sctools import qc, plot
+
+    # plotting QC for initial assessment
+    qc.compute_metrics(adata)
+    fig = plot.qc.plot_qc(
+        adata,
+        sample_id_column = 'sample_id'
+    )
+
+    # plotting QC with possible filtering thresholds
+    MIN_RNA_FEATURES = 750
+    MAX_RNA_FEATURES = 6000
+    MAX_PERCENT_MT = 15
+    qc_thresholds = {
+        k: {
+            'nFeature_RNA': (MIN_RNA_FEATURES, MAX_RNA_FEATURES), 
+            'percent_mt': (0, MAX_PERCENT_MT), 
+            'percent_ribo': (5, 100)
+        } 
+        for k 
+        in adata.obs.sample_id
+    }
+
+    qc.apply_qc_thresholds(
+        adata, 
+        'sample_id', 
+        qc_thresholds
+    )
+    fig = plot.qc.plot_qc(
+        adata,
+        sample_id_column = 'sample_id'
+    )
+    ```
     '''
     if not sample_id_column:
         fig, axs = plt.subplots(2, 3)
