@@ -110,7 +110,10 @@ def plot_qc(
     from sctools import qc, plot
 
     # plotting QC for initial assessment
+    # compute qc metrics (nFeature_RNA, percent_mt, percent_ribo etc.
     qc.compute_metrics(adata)
+
+    # plot qc per sample to define filtering thresholds
     fig = plot.qc.plot_qc(
         adata,
         sample_id_column = 'sample_id'
@@ -120,6 +123,8 @@ def plot_qc(
     MIN_RNA_FEATURES = 750
     MAX_RNA_FEATURES = 6000
     MAX_PERCENT_MT = 15
+
+    # define filtering thresholds
     qc_thresholds = {
         k: {
             'nFeature_RNA': (MIN_RNA_FEATURES, MAX_RNA_FEATURES), 
@@ -130,11 +135,14 @@ def plot_qc(
         in adata.obs.sample_id
     }
 
+    # compute QC passing cells
     qc.apply_qc_thresholds(
         adata, 
         'sample_id', 
         qc_thresholds
     )
+
+    # plot qc to assess filtering impact
     fig = plot.qc.plot_qc(
         adata,
         sample_id_column = 'sample_id'
