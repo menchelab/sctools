@@ -31,6 +31,19 @@ def plot_leiden_clusterings(
     :param size:           dot size to use for plotting the data
 
     :return:               plt.Figure, array of Axes objects
+
+    :Usage:
+    ```
+    from sctools import plot
+
+    # compute and plot leiden clusterings for all integrated datasets
+    fig, axs = plot.integrate.plot_leiden_clusterings(
+        integration_results,
+        [0.1, 0.25, 0.3, 0.4],
+        data_key = 'data',
+        legend_loc = 'on data'
+    )
+    ```
     '''
     fig, axs = plt.subplots(
         len(data_dict), 
@@ -102,6 +115,26 @@ def plot_integration_results(
     :param legend_off:     whether to show legends for each generated umap
 
     :return:               plt.Figure, array of Axes objects
+
+    :Usage:
+    ```
+    from sctools import plot
+
+    # plot integration results
+    fig, axs = plot.integrate.plot_integration_results(
+        integration_results,
+        ['status', 'sample_id', 'FOXP3', 'CD3D'],    # adata features (obs or var) to overlay on UMAP
+        # sc.pl.umap kwargs for individual parameterizations of the above
+        [
+            dict(size = 10, vmax = None),
+            dict(size = 10, vmax = None),
+            dict(size = 10, vmax = 1),
+            dict(size = 10, vmax = 10)
+        ],
+        data_key = 'data',
+        legend_off = True
+    )
+    ```
     '''
     fig, axs = plt.subplots(len(color_keys), len(data_dict))
     for i, (k, d) in enumerate(data_dict.items()):
@@ -172,6 +205,40 @@ def plot_clustering_and_expression(
     :param legend_off:         whether to show legends for each generated umap
     
     :return:                   plt.Figure, array of Axes objects
+
+    :Usage:
+    ```
+    from sctools import plot
+    
+    # generate leiden clusterings as assessed with 'plot_leiden_clustering'
+    resolutions = {
+        'tissue.scps': 0.1,
+        'tissue.uc': 0.4,
+        'tissue.ad': 0.25,
+        'pbmc.scps': 0.3
+    }
+    for k, resolution in resolutions.items():
+        d = integration_results[k]
+        sc.tl.leiden(
+            d['data'], 
+            key_added = f'leiden_scvi_{resolution}',
+            resolution = resolution
+        )
+
+    # plot results with gene expressions to identify cell types or similar
+    cluster_keys = {k: f'leiden_scvi_{r}' for k, r in resolutions.items()}
+    fig, axs = plot.integrate.plot_clustering_and_expression(
+        integration_results,
+        cluster_keys,
+        ['CD3D', 'FOXP3'],
+        [
+            dict(size = 10, vmax = None, legend_loc = 'on data'),
+            dict(size = 10, vmax = 10),
+            dict(size = 10, vmax = 1)
+        ],
+        data_key = 'data'
+    )
+    ```
     '''
     fig, axs = plt.subplots(len(expression_keys) + 1, len(data_dict))
     for i, (k, d) in enumerate(data_dict.items()):
@@ -230,6 +297,20 @@ def raw_data_umap(adata, color, nhvg = 4000, savefile = None, **kwargs):
     :param **kwargs:     keyword arguments to pass to sc.pl.umap
 
     :return:             None
+
+    :Usage:
+    ```
+    from sctools import plot
+    
+    for k, adata in adatas.items():
+        plot.integrate.raw_data_umap(
+            adata,
+            ['status', 'tissue', 'FOXP3'],
+            size = 10,
+            vmax = 0.5,
+            savefile = f'../plots/{k}.raw.umap.png'
+        )
+    ```
     '''
     tmp = adata.copy()
     sc.pp.normalize_total(
