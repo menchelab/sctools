@@ -548,6 +548,96 @@ def grouped_heatmap(
     :param figheight:            height of the generated figure
 
     :return:                     plt.Figure, array of Axes objects for the subplots and the x and y grouping info as dictionaries
+
+    :Usage:
+    ```
+    from sctools import plot
+
+    # a dataframe containing differentially expressed genes of the format
+    #                     Group                    Tissue    regulation                                                       
+    # TNFRSF4             Tcell_costim_activation  colon         up
+    # TNFRSF18            Tcell_costim_activation  colon         up
+    # CD7                 Tcell_costim_activation  colon         up
+    # LAG3                Tcell_costim_activation  colon         up
+    # HLA-C               Tcell_costim_activation  colon         up
+    # MAL                 Tcell_costim_activation  colon         up
+    # CD69                Tcell_costim_activation  colon       down
+    # CCL20         Cytokine_Chemokine_Signalling  colon         up
+    # LTB           Cytokine_Chemokine_Signalling  colon         up
+    # IL17A         Cytokine_Chemokine_Signalling  colon         up
+    # IL10          Cytokine_Chemokine_Signalling  colon       down
+    # or similar possibly containing DEGs for different datasets like in this example
+    df = pd.read_csv(
+        '../resource/DEGs_grouped_updated.txt', 
+        sep = '\t'
+    )
+
+    # split DEG dataframe into the different datasets indicated by Tissue
+    degs = {}
+    for k, tissue in zip(data_keys, ['skin', 'colon']):
+        deg_df = df.loc[df.Tissue == tissue, :]
+        deg_df.set_index(
+            'Gene',
+            inplace = True
+        )
+        degs[k] = deg_df
+    
+    labels_to_show = {
+        'tcells.tissue.scps': [
+            'TNFRSF4', 'CD69', 'TNFRSF9', 'ICOS', 
+            'YWHAH', 'ODC1', 'GLS', 'SAT1', 'SLC2A3', 
+            'NFKB2', 'IRF1', 'NFKBIA', 'REL', 'SOCS1', 
+            'SOCS3', 'JUN', 'JUNB', 'FOS', 'JUND'
+        ],
+        'tcells.tissue.uc': [
+            'MAL', 'LAG3', 'CD7', 'TNFRSF18', 
+            'TNFRSF4', 'CD69', 'IL10'
+        ]
+    }
+
+    # this ensures that legends for both heatmaps plotted are the same
+    # which is important for comparing the two plots later
+    palette = sns.color_palette('Set2', len(df.Group.unique()))
+    gene_group_palette = {
+        k: palette[i] for i, k in enumerate(df.Group.unique())
+    }
+
+    # actually plotting the heatmaps
+    for k, adata in adatas.items():
+        deg_df = degs[k]
+
+        # ensuring data is log-normalized and scaled
+        adata.X = adata.layers['counts'].copy()
+        sc.pp.normalize_total(adata, target_sum = 1e4)
+        sc.pp.log1p(adata)
+        sc.pp.scale(adata)
+        
+        bdata = adata[:, deg_df.index]
+        bdata.var = bdata.var.merge(
+            deg_df,
+            how = 'left',
+            left_index = True,
+            right_index = True
+        )
+    
+        fig, axs, x_group_info, y_group_info = plot.evaluate.grouped_heatmap(
+            bdata,
+            ['condition'],
+            ['regulation', 'Group'],
+            {'condition': 'husl'},
+            {'regulation': 'husl', 'Group': gene_group_palette},
+            cmap,
+            vmin = -1,
+            vmax = 1,
+            show_var_labels = True,
+            var_labels_to_show = labels_to_show[k],
+            figwidth = 7,
+            figheight = 10
+        )
+        fig.savefig(
+            f'../plots/{k}.deg.heatmap.pdf'
+        )
+    ```
     '''
     data = adata.to_df()
     obs = adata.obs.loc[:, x_groupby]
