@@ -67,19 +67,25 @@ def generate_qc_plots(
             color = 'lightblue'
         )
         
-        if thresholds:
-            for key, plotline in zip(
-                [xcol, ycol],
-                [axs[1, j].axvline, axs[1, j].axhline]
-            ):
-                if key in thresholds:
-                    for position in thresholds[key]:
-                        if position:
-                            plotline(
-                                position,
-                                color = 'k',
-                                linewidth = 1
-                            )
+        if not thresholds:
+            continue
+            
+        for key, plotline in zip(
+            [xcol, ycol],
+            [axs[1, j].axvline, axs[1, j].axhline]
+        ):
+            if not key in thresholds:
+                continue
+                
+            for position in thresholds[key]:
+                if not position:
+                    continue
+                    
+                plotline(
+                    position,
+                    color = 'k',
+                    linewidth = 1
+                )
 
                             
 def plot_qc(
