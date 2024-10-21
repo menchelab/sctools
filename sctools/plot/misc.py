@@ -32,6 +32,34 @@ def generate_and_save_for_figure(
     :param linewidths:             with of the edge lines of the scatter dots
 
     :return:                       None
+
+    :Usage:
+    ```
+    from sctools import plot
+
+    # make patient_id colors persistent to have the same colors also for filtered datasets later on
+    # e.g. T-cell subsets or similar
+    patient_id_color_palette = {
+        k: v for k, v 
+        in zip(tmp.obs.patient_id.cat.categories, tmp.uns['patient_id_colors'])
+    }
+
+    # plot the thing
+    plot.misc.generate_and_save_for_figure(
+        adata,
+        {
+            'sample_id': (None, None),
+            'patient_id': (patient_id_color_palette, None),
+            'status': ('colorblind', None),
+            'CD3D': (cmap, 3)
+        },
+        f'{plot_dir}/{k}' + '.raw.{0}.png',
+        f'{plot_dir}/{k}' + '.raw.{0}.legend.pdf',
+        size = 10,
+        edgecolor = 'k',
+        linewidths = 0.05
+    )
+    ```
     '''
     for col, (palette, vmax) in columns_to_plot.items():
         # generate figure and remove legend
@@ -110,4 +138,3 @@ def generate_and_save_for_figure(
             fig.savefig(legend_save_file.format(col))
         
         plt.close(fig)
-            
