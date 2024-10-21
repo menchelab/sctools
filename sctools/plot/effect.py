@@ -106,6 +106,126 @@ def dotplot(
     :param dotsize_label:             label to use for the dot size legend
 
     :return:                          plt.Figure
+
+    :Usage:
+    ```
+    from sctools.score import module_eigengene
+    from sctools.effects import category_effects_on_modules
+    from sctools import plot
+    
+    import seaborn as sns
+    import numpy as np
+    import matplotlib.pyplot as plt
+    
+
+    # utility function to reformat results dataframe for plotting
+    # this is not generic and tailored to the data at hand so you may need adapt it
+    def mold_frame_for_plotting(data):
+        data = data.reset_index(level = 1, drop = True)
+        data = data.T.reset_index(names = ['sex', 'timepoint', 'genotype'])
+        data.loc[:, 'genotype'] = data.genotype.apply(lambda x: x[11:-1])
+        timepoint = pd.Categorical(
+            data.timepoint,
+            categories = ['E14.5', 'P4', 'P14'],
+            ordered = True
+        )
+        data.drop(columns = ['timepoint'], inplace = True)
+        data['timepoint'] = timepoint
+        data = data.sort_values(by = ['timepoint', 'genotype', 'sex'])
+        data.index = data[['timepoint', 'genotype', 'sex']].apply(lambda x: '_'.join(x), axis = 1)
+        return data.drop(columns = ['timepoint', 'genotype', 'sex'])
+        
+
+    # assess effect on regulons for each timepoint and sex separately
+    cell_class_coefficients = {}
+    for cell_class in cell_classes:
+        sex_coefficients = {}
+        for sex in adata.obs.sex.unique():
+            cell_index = (
+                (adata.obs.final_annotation_class == cell_class) & 
+                (adata.obs.sex == sex)
+            )
+            sex_coefficients[sex] = category_effects_on_modules(
+                adata[cell_index, :], 
+                regulons, 
+                'genotype', 
+                module_eigengene, 
+                reference_category = 'WT', 
+                high_level_grouping = 'timepoint',
+                covariates = ['nFeature_RNA']
+            )
+    
+        cell_class_coefficients[cell_class] = sex_coefficients
+
+    # reformat effects dataframes and remove unuses columns (i.e. regressed out covariates)
+    coefficients_per_cell_class = {}
+    for cell_class, sex_coefficients in cell_class_coefficients.items():
+        sex_coeffs = {}
+        for sex, coeffs in sex_coefficients.items():
+            cov_values = coeffs.columns.unique(level = 1)
+            
+            # this is just in case you also want to remove categorical covariates such as sample_id
+            # this is not done in this example but left here for reference anyway
+            covariates = [cov for cov in cov_values if cov.startswith('sample')] + ['nFeature_RNA']
+            
+            sex_coeffs[sex] = coeffs.drop(
+                columns = covariates,
+                level = 1
+            )
+            
+        coefficients_per_cell_class[cell_class] = pd.concat(
+            sex_coeffs, 
+            names = ['sex'], 
+            axis = 1
+        )
+
+    # plot results as dotplot
+    for k, coefficients in coefficients_per_cell_class.items():
+        # reformat effects dataframe
+        data = mold_frame_for_plotting(
+            coefficients.loc[(slice(None), 'coefficients'), :].copy()
+        )
+        # do the same with padj which is used for filtering
+        mask = mold_frame_for_plotting(
+            coefficients.loc[(slice(None), 'padj'), :].copy()
+        )
+
+        # this is just an easy way to perform clusterings for rows and cols
+        # could also be done with scipy alone but this is a convenient shortcut
+        clustergrid = sns.clustermap(
+            data.T,
+            row_cluster = True,
+            col_cluster = False,
+            vmin = -1, 
+            vmax = 1,
+            cmap = 'coolwarm',
+            figsize = (15, 40),
+            method = 'ward',
+            cbar_kws = {'fraction': 0.05},
+        )
+        # get row reordering and close the figure to make sure it is not shown
+        row_order = clustergrid.dendrogram_row.reordered_ind
+        plt.close(clustergrid.fig)
+
+        # plot actual figure using the effect sizes as dot color and
+        # the adjusted p-Value as dot sizes indicating all significant padj with a black outline
+        fig = plot.effect.dotplot(
+            data.T,
+            -np.log10(mask.T),
+            'coolwarm',
+            -1, 1,
+            size_norm = (0, 50),
+            figsize = (10, 20),
+            size_scale = 50,
+            indicator_threshold = -np.log10(0.01),
+            row_order = row_order,
+            cbar_label = 'effect size',
+            dotsize_label = '-log10(padj)'
+        )
+        fig.suptitle(k)
+        fig.tight_layout()
+        fig.savefig(f'../plots/{k}.genotype_effect.dot.pdf')
+    ```
     '''
     num_rows, num_cols = color_data.shape
     xs = np.linspace(0, num_cols, num_cols)
