@@ -8,3 +8,5 @@ git clone git@github.com:menchelab/sctools.git
 cd sctools
 pip install .
 ```
+## Citation
+If you use it please consider citing [Neuwirth & Malzl et al.](https://doi.org/10.1101/2024.03.25.586519)
