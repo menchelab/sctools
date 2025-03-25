@@ -43,10 +43,17 @@ import numpy as np
 
 def get_nexpressed(adata):
     '''
+    computes number of cells a gene is expressed in
+    '''
+    return np.array((adata.X > 0).sum(axis = 0)).flatten()
+
+
+def ngenes_per_cell(adata)
+    '''
     computes number of expressed genes per cell
     '''
-    return np.array((adata.X > 0).sum(axis = 1)).flatten()
-
+    np.array((adata.X > 0).sum(axis = 1)).flatten()
+    
 
 def compute_qc_metrics(adata, mitochondrial_re = '^MT.', ribosomal_re = '^RP[SL]'):
     '''
@@ -69,7 +76,7 @@ def compute_qc_metrics(adata, mitochondrial_re = '^MT.', ribosomal_re = '^RP[SL]
     '''
     # flatten is needed due to csr_matrix.sum returning a numpy.matrix object
     # which cannot be broadcasted to obs frame
-    adata.obs['nFeature_RNA'] = get_nexpressed(adata)
+    adata.obs['nFeature_RNA'] = ngenes_per_cell(adata)
     adata.obs['nCount_RNA'] = np.array(adata.X.sum(axis = 1)).flatten()
     adata.obs['percent_mt'] = np.array(
         adata[:, adata.var.index.str.match(mitochondrial_re)].X.sum(axis = 1) / adata.X.sum(axis = 1) * 100
