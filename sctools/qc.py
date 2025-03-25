@@ -45,7 +45,7 @@ def get_nexpressed(adata):
     '''
     computes number of expressed genes per cell
     '''
-    return np.array((adata.X > 0).sum(axis = 0)).flatten()
+    return np.array((adata.X > 0).sum(axis = 1)).flatten()
 
 
 def compute_qc_metrics(adata, mitochondrial_re = '^MT.', ribosomal_re = '^RP[SL]'):
