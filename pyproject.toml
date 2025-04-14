@@ -28,6 +28,9 @@ dependencies = [
     'scvi-tools >= 0.15.4',
     'seaborn >= 0.11.2',
     'statsmodels >= 0.14.3',
+    'tokenizers == 0.14',
+    'regex == 2024.11.6',
+    'scikit-misc==0.5.1',
 #     'doubletdetection >= 4.2'
 ]
 requires-python = ">=3.9"
