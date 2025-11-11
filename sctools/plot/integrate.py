@@ -313,6 +313,7 @@ def raw_data_umap(adata, color, nhvg = 4000, savefile = None, **kwargs):
     ```
     '''
     tmp = adata.copy()
+    tmp.layers['counts'] = tmp.X.copy()
     sc.pp.normalize_total(
         tmp, 
         target_sum = 1e4
@@ -322,12 +323,13 @@ def raw_data_umap(adata, color, nhvg = 4000, savefile = None, **kwargs):
         tmp,
         n_top_genes = nhvg,
         flavor = "seurat_v3",
+        layer = 'counts'
     )
     sc.pp.pca(
         tmp, 
         n_comps = 40, 
         svd_solver = 'arpack',
-        use_highly_variable = True
+        mask_var = 'highly_variable'
     )
     sc.pp.neighbors(
         tmp,
