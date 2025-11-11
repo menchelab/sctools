@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sctools"
-version = "1.0.1"
+version = "1.0.2"
 description = "Python package for making large scale scRNAseq analysis a bit easier"
 readme = "README.md"
 authors = [{ name = "Daniel Malzl", email = "daniel@menchelab.com" }]
