@@ -48,7 +48,7 @@ def get_nexpressed(adata):
     return np.array((adata.X > 0).sum(axis = 0)).flatten()
 
 
-def ngenes_per_cell(adata)
+def ngenes_per_cell(adata):
     '''
     computes number of expressed genes per cell
     '''
